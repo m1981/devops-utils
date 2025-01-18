@@ -42,6 +42,3 @@ decrypt: ## Decrypt secrets file (Usage: make decrypt FILE=secrets/dev.enc.yaml)
 		exit 1; \
 	fi
 	./scripts/secrets-manager.sh decrypt $(FILE)
-
-test-all: ## Run all secret management tests
-	./scripts/secrets-manager.sh test
