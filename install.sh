@@ -24,23 +24,23 @@ print_banner() {
 }
 
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}$1${NC}"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN}$1${NC}"
 }
 
 log_error() {
-    echo -e "${RED}❌ Error: $1${NC}" >&2
+    echo -e "${RED}Error: $1${NC}" >&2
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}$1${NC}"
 }
 
 log_step() {
-    echo -e "${CYAN}→ $1${NC}"
+    echo -e "${CYAN}$1${NC}"
 }
 
 # Detect shell (zsh or bash)
@@ -86,10 +86,10 @@ install_devops_utils() {
 
     # Clone the repository
     if [ -d "$INSTALL_DIR/.git" ]; then
-        log_step "Updating existing installation..."
+        log_step "Updating existing installation... $INSTALL_DIR"
         git -C "$INSTALL_DIR" pull
     else
-        log_step "Performing fresh installation..."
+        log_step "Performing fresh installation... $INSTALL_DIR"
         # Redirect git output to hide verbose clone messages
         git clone https://github.com/m1981/devops-utils.git "$INSTALL_DIR" 2>&1 | grep -v "Receiving objects" | grep -v "Resolving deltas" || true
     fi

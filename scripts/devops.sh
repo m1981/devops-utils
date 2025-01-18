@@ -8,6 +8,11 @@ readonly SOPS_DIR="${HOME}/.sops"
 readonly KEYS_FILE="${SOPS_DIR}/keys.txt"
 readonly SOPS_CONFIG=".sops.yaml"
 readonly SECRETS_DIR="secrets"
+# Add path to the devops-utils installation directory
+readonly DEVOPS_UTILS_DIR="${HOME}/.devops-utils"
+
+# Get the script name without path for help display
+readonly SCRIPT_NAME=$(basename "$0")
 
 # Colors for output
 readonly RED='\033[0;31m'
@@ -28,6 +33,24 @@ log_info() {
     echo -e "${BLUE}$1${NC}"
 }
 
+show_help() {
+    echo "Usage: ${SCRIPT_NAME} <command> [arguments]"
+    echo ""
+    echo "Commands:"
+    echo "  build-image              Build the Docker image"
+    echo "  generate-keys            Generate new Age keys and create .sops.yaml"
+    echo "  encrypt <file.yaml>      Encrypt the specified YAML file"
+    echo "  decrypt <file.enc.yaml>  Decrypt the specified encrypted YAML file"
+    echo "  devops-shell             Start a devops shell session with the environment setup"
+    echo "  help                     Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  ${SCRIPT_NAME} build-image"
+    echo "  ${SCRIPT_NAME} generate-keys"
+    echo "  ${SCRIPT_NAME} encrypt secrets/dev.yaml"
+    echo "  ${SCRIPT_NAME} decrypt secrets/dev.enc.yaml"
+}
+
 build_image() {
     log_info "Building Docker image ${DOCKER_IMAGE}..."
 
@@ -37,9 +60,9 @@ build_image() {
 
     # Build the Docker image
     docker build \
-        --build-arg USER_ID=$HOST_UID \
-        --build-arg GROUP_ID=$HOST_GID \
-        -t $DOCKER_IMAGE $DOCKER_BUILD_DIR
+        --build-arg USER_ID="$HOST_UID" \
+        --build-arg GROUP_ID="$HOST_GID" \
+        -t "$DOCKER_IMAGE" "${DEVOPS_UTILS_DIR}/docker/age-sops"
 
     log_success "Successfully built Docker image ${DOCKER_IMAGE}."
 }
