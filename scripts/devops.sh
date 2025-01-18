@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Constants
 readonly DOCKER_IMAGE="age-dev"
+readonly DOCKER_BUILD_DIR="docker/age-sops"
 readonly SOPS_DIR="${HOME}/.sops"
 readonly KEYS_FILE="${SOPS_DIR}/keys.txt"
 readonly SOPS_CONFIG=".sops.yaml"
@@ -25,6 +26,22 @@ log_success() {
 
 log_info() {
     echo -e "${BLUE}$1${NC}"
+}
+
+build_image() {
+    log_info "Building Docker image ${DOCKER_IMAGE}..."
+
+    # Get host user's UID and GID
+    HOST_UID=$(id -u)
+    HOST_GID=$(id -g)
+
+    # Build the Docker image
+    docker build \
+        --build-arg USER_ID=$HOST_UID \
+        --build-arg GROUP_ID=$HOST_GID \
+        -t $DOCKER_IMAGE $DOCKER_BUILD_DIR
+
+    log_success "Successfully built Docker image ${DOCKER_IMAGE}."
 }
 
 check_prerequisites() {
@@ -52,7 +69,7 @@ generate_keys() {
         "$DOCKER_IMAGE" bash -c '
             age-keygen -o ~/.sops/keys.txt
             echo "Public key:"
-            cat ~/.sops/keys.txt | grep "public key"
+            grep "public key" ~/.sops/keys.txt
         '
 
     # Create .sops.yaml configuration
@@ -114,16 +131,30 @@ decrypt_file() {
     log_success "Successfully decrypted: $output_file"
 }
 
+devops_shell() {
+    check_prerequisites
+
+    docker run --rm -it \
+        -v "$(pwd):/work" \
+        -v "${SOPS_DIR}:/home/developer/.sops" \
+        -w /work \
+        -e SOPS_AGE_KEY_FILE=/home/developer/.sops/keys.txt \
+        "$DOCKER_IMAGE" bash
+}
+
 show_help() {
     echo "Usage: $0 <command> [arguments]"
     echo ""
     echo "Commands:"
+    echo "  build-image              Build the Docker image"
     echo "  generate-keys            Generate new Age keys and create .sops.yaml"
     echo "  encrypt <file.yaml>      Encrypt the specified YAML file"
     echo "  decrypt <file.enc.yaml>  Decrypt the specified encrypted YAML file"
+    echo "  devops-shell             Start a devops shell session with the environment setup"
     echo "  help                     Show this help message"
     echo ""
     echo "Examples:"
+    echo "  $0 build-image"
     echo "  $0 generate-keys"
     echo "  $0 encrypt secrets/dev.yaml"
     echo "  $0 decrypt secrets/dev.enc.yaml"
@@ -131,12 +162,15 @@ show_help() {
 
 # Main script
 case "${1:-help}" in
+    build-image)
+        build_image
+        ;;
     generate-keys)
         generate_keys
         ;;
     encrypt)
         if [ $# -ne 2 ]; then
-            log_error "Encryption requires a file argument"
+            log_error "Encryption requires a file argument."
             show_help
             exit 1
         fi
@@ -144,11 +178,14 @@ case "${1:-help}" in
         ;;
     decrypt)
         if [ $# -ne 2 ]; then
-            log_error "Decryption requires a file argument"
+            log_error "Decryption requires a file argument."
             show_help
             exit 1
         fi
         decrypt_file "$2"
+        ;;
+    devops-shell)
+        devops_shell
         ;;
     help|--help|-h)
         show_help
