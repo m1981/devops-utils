@@ -25,7 +25,7 @@ security-check: ## Run security checks
 	./scripts/security/run-checks.sh
 
 generate-keys: ## Generate new Age keys
-	./scripts/generate-keys.sh
+	./scripts/secrets-manager.sh generate-keys
 
 encrypt: ## Encrypt secrets file (Usage: make encrypt FILE=secrets/dev.yaml)
 	@if [ -z "$(FILE)" ]; then \
@@ -33,7 +33,7 @@ encrypt: ## Encrypt secrets file (Usage: make encrypt FILE=secrets/dev.yaml)
 		echo "Usage: make encrypt FILE=secrets/dev.yaml"; \
 		exit 1; \
 	fi
-	./scripts/encrypt-secrets.sh $(FILE)
+	./scripts/secrets-manager.sh encrypt $(FILE)
 
 decrypt: ## Decrypt secrets file (Usage: make decrypt FILE=secrets/dev.enc.yaml)
 	@if [ -z "$(FILE)" ]; then \
@@ -41,4 +41,7 @@ decrypt: ## Decrypt secrets file (Usage: make decrypt FILE=secrets/dev.enc.yaml)
 		echo "Usage: make decrypt FILE=secrets/dev.enc.yaml"; \
 		exit 1; \
 	fi
-	./scripts/decrypt-secrets.sh $(FILE)
+	./scripts/secrets-manager.sh decrypt $(FILE)
+
+test-all: ## Run all secret management tests
+	./scripts/secrets-manager.sh test
